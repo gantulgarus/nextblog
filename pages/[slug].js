@@ -1,10 +1,39 @@
 import { Row, Col } from "react-bootstrap";
 import Layout from "components/layout";
-import { getPostBySlug, getAllPosts } from "lib/api";
+import { getPostBySlug, getPaginatedPosts } from "lib/api";
 import BlockContent from "@sanity/block-content-to-react";
 import HightlightCode from "components/highlight-code";
 import { urlFor } from "lib/api";
 import PostHeader from "components/post-header";
+import { useRouter } from "next/router";
+
+export default ({ post }) => {
+  const router = useRouter();
+
+  if (router.isFallback)
+    return (
+      <Layout>
+        <div>Түр хүлээнэ үү...</div>
+      </Layout>
+    );
+
+  return (
+    <Layout>
+      <Row>
+        <Col md="12">
+          {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
+          <PostHeader post={post} />
+          <br />
+          <BlockContent
+            blocks={post.content}
+            imageOptions={{ w: 320, h: 240, fit: "max" }}
+            serializers={serializers}
+          />
+        </Col>
+      </Row>
+    </Layout>
+  );
+};
 
 const serializers = {
   types: {
@@ -25,25 +54,6 @@ const serializers = {
   },
 };
 
-export default ({ post }) => {
-  return (
-    <Layout>
-      <Row>
-        <Col md="12">
-          {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
-          <PostHeader post={post} />
-          <br />
-          <BlockContent
-            blocks={post.content}
-            imageOptions={{ w: 320, h: 240, fit: "max" }}
-            serializers={serializers}
-          />
-        </Col>
-      </Row>
-    </Layout>
-  );
-};
-
 export const getStaticProps = async ({ params }) => {
   const post = await getPostBySlug(params.slug);
   return {
@@ -54,7 +64,7 @@ export const getStaticProps = async ({ params }) => {
 };
 
 export const getStaticPaths = async () => {
-  const posts = await getAllPosts();
+  const posts = await getPaginatedPosts(0, 4);
 
   const data = posts.map((post) => ({
     params: {
@@ -63,6 +73,6 @@ export const getStaticPaths = async () => {
   }));
   return {
     paths: data,
-    fallback: false,
+    fallback: true,
   };
 };
